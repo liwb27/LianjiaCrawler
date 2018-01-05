@@ -25,57 +25,60 @@ class Aera:
             subAeraDict[subaera.aeraUrl] = subaera.aeraName
         return subAeraDict
 
-def get_house_dict(url, saveFileName = "house_list.txt"):
+def get_house_list(url, saveFileName = "house_list.txt", offline = False):
     '''
     从首页url开始，获取所有房源详细url
     得到区域列表->去除重复子区域
+    offline=true时，只读取文本中的url列表
     '''
-    #写入User Agent信息
-    head = {}
-    head['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'
-    req = urllib.request.Request(url, headers=head)
+    # #写入User Agent信息
+    # head = {}
+    # head['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'
+    # req = urllib.request.Request(url, headers=head)
 
     #读取已有的房源列表
-    house_dict = {}
+    house_from_file = []
     try:
         if os.path.exists(saveFileName):
             f = codecs.open(saveFileName, 'r', "UTF-8")
             content = f.read()
-            house_dict = eval(content)
+            house_from_file = eval(content)
     except:
         print("读取" + saveFileName + "文件异常，未载入已有房源信息")
-        house_dict = {}
+        house_from_file = []
+    if offline:
+        return house_from_file
 
+    #获取所有区域，并去除重复子区域
     aeras = parse_aera(url)
-    #去除重复子区域
     subAeraDict = {}
     for aera in aeras:
         subAeraDict.update(aera.get_subaera_dict())
 
     #收集每个子区域
-    house_dict_new = {}
+    house_from_web = []
     for (sub_aera_url, sub_aera_name) in subAeraDict.items():
         print("开始收集[" + sub_aera_name + "]子区域...", end="")
-        tmpDict = parse_house_url(sub_aera_url)
-        oldCount = len(house_dict_new)
-        house_dict_new.update(tmpDict) #合并
-        newCount = len(house_dict_new)
-        print("[" + sub_aera_name + "]收集完成！新收集：" + str(newCount-oldCount) + "条，重复：" + str(len(tmpDict)-newCount+oldCount) + "，共" + str(newCount) + "条")
+        tmplist = parse_house_url(sub_aera_url)
+        house_from_web.extend(tmplist)
+        print("[" + sub_aera_name + "]，共" + str(len(tmplist)) + "条")
     
-    #比较两次的差值，更新字典
-    house_count = len(house_dict)
-    house_count_new = len(house_dict_new)
-    house_dict.update(house_dict_new)
-    house_count_update = len(house_dict)
-    print("更新详情：获取房源" + str(house_count_new) + "条，其中新房源" + str(house_count_update - house_count) + "条，更新后总房源" + str(house_count_update) + "条")
+    #比较两次的差值
+    count_web = len(house_from_web)
+    count_file = len(house_from_file)
+    house_set = set(house_from_web) | set(house_from_file)
+    count_set = len(house_set)
+    print("更新详情：获取房源" + str(count_web) + "条，其中新房源" + str(count_set - count_file) + "条，更新后总房源" + str(count_set) + "条")
 
+    #转换为list
+    house_list = list(house_set)
     #保存文件
     f = codecs.open(saveFileName, 'w', "UTF-8")
-    s = str(house_dict)
+    s = str(house_list)
     f.write(s)
     f.close()
 
-    return house_dict
+    return house_list
 
 def parse_aera(url):
     '''
@@ -123,7 +126,7 @@ def parse_subaera(url, home_url):
 
 def parse_house_url(url):
     '''
-    从url中解析所有房源，逐页进行
+    从url中解析所有房源，逐页进行，返回所有房源列表
     '''
     html = urlopen(url)
     bsObj = BeautifulSoup(html, "html.parser")
@@ -133,7 +136,7 @@ def parse_house_url(url):
         print("Warning! 房源数过多，无法全部抓取，url:", url)
     if totalNumber == 0:
         print("房源总数为0，", url)
-        return {}
+        return []
 
     #获取房源总页数
     try:
@@ -142,29 +145,24 @@ def parse_house_url(url):
         print("共" + str(pageMax) + "页")
     except: 
         print("Exception: 未找到页码总数，已跳过")
-        return {}
+        return []
 
     #获取每页的房源url
-    # houselist = []
-    # houselist.extend(GetHouseUrl(bsObj))
-    houseDict = {}
+    houselist = []
     print("正在读取第1页...")
-    get_house_url(bsObj, houseDict)
+    houselist.extend(get_house_url(bsObj))
     for i in range(2,pageMax+1):
         print("正在读取第" + str(i) + "页...")
         html_tmp = urlopen(url + "pg" + str(i))
         bs_tmp = BeautifulSoup(html_tmp, "html.parser")
-        # houselist.extend(GetHouseUrl(bs_tmp))
-        get_house_url(bs_tmp, houseDict)
-    return houseDict
+        houselist.extend(get_house_url(bs_tmp))
+    return houselist #返回list,未去除重复url
 
-def get_house_url(bsObj, houseDict):
+def get_house_url(bsObj):
     '''
-    从bsObj中获取所有的房源url，存放进houseDict中
+    从bsObj中获取所有的房源url
     '''
+    urllist = []
     for a in bsObj.find("ul", {"class":"sellListContent"}).findAll("a", {"class":"img"}):
-        # urllist.append({'href' : a.attrs["href"], 'title' : a.img.attrs["alt"]})
-        if(a.attrs["href"] not in houseDict.keys()):
-            houseDict[a.attrs["href"]] = [a.img.attrs["alt"], ]
-        else:
-            print("发现重复：", a.attrs["href"], a.img.attrs["alt"])
+        urllist.append(a.attrs["href"])
+    return urllist

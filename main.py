@@ -4,21 +4,16 @@ import re
 import codecs
 from pymongo import MongoClient
 from HouseDetail import get_houselist_detail
-from HouseList import get_house_dict
+from HouseList import get_house_list
 
-
+#写入User Agent信息
+url = "https://zz.lianjia.com/ershoufang/"
+head = {}
+head['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'
+req = urllib.request.Request(url, headers=head)
 
 #获取房源列表
-f = codecs.open("house_list.txt", "r", "UTF-8")
-house_list = eval(f.read())
-ttt = []
-for (key, value) in house_list.items:
-    ttt.append(key)
-
-
-
-
-# house_list = get_house_dict("https://zz.lianjia.com/ershoufang/")
+house_list = get_house_list(url, offline = False)
 
 (house_list_delete, house_list_error) = get_houselist_detail(house_list, MongoClient('localhost', 27017))
 

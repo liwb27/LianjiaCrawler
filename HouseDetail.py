@@ -140,7 +140,7 @@ def get_houselist_detail(house_list, conn):
     house_list_error = []
     count = len(house_list)
     num = 1
-    for (key,value) in house_list.items():
+    for key in house_list:
         id =  int(re.findall(r"[0-9]+", key)[0])
         print("开始读取"+str(num)+"/"+str(count),key,end="  ")
         num = num + 1
