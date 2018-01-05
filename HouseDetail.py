@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import codecs
 import re
 import datetime
-import sqlite3
+import urllib.request
 
 def parse_huxing(text):
     ting = re.findall(r"\d(?=室)",text)
@@ -126,6 +126,42 @@ def get_house_detail(html):
 
     #返回值
     return house
+
+def get_houselist_detail(house_list, conn):
+    '''
+    分析house_list中所有的房源数据，结果存入数据库中
+    '''
+    #数据库表设置
+    db = conn.lianjia
+    myset = db.house_detail
+    #记录完成信息
+    house_list_delete = []
+    # house_list_finished = []
+    house_list_error = []
+    count = len(house_list)
+    num = 1
+    for (key,value) in house_list.items():
+        id =  int(re.findall(r"[0-9]+", key)[0])
+        print("开始读取"+str(num)+"/"+str(count),key,end="  ")
+        num = num + 1
+        if not myset.find_one({"_id":id}):
+            try:
+                html = urllib.request.urlopen(key)
+                house = get_house_detail(html)
+                print("成功!",end="")
+                myset.insert(house)
+                print("写入数据库成功!")
+                # house_list_finished.append(key)
+            except urllib.error.HTTPError as e:
+                house_list_delete.append(key)
+                print(e.code, e.reason)
+            except Exception as e:
+                house_list_error.append(key)
+                print(e)
+        else:
+            # house_list_finished.append(key)
+            print("发现重复键，未写入数据库!")
+    return (house_list_delete, house_list_error)
 
 def test():
     f = codecs.open("webpages\\国土资源厅家属院 带车位地下室 户型方正 南北通透_郑州郑州东站建业如意家园二手房推荐(郑州链家网).html", 'r', "UTF-8")

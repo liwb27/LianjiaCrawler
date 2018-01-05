@@ -2,39 +2,36 @@ import urllib.request
 import os
 import re
 import codecs
-from HouseDetail import get_house_detail
-import HouseDetail
 from pymongo import MongoClient
+from HouseDetail import get_houselist_detail
+from HouseList import get_house_dict
 
 
 
-
-conn = MongoClient('localhost', 27017)
-db = conn.lianjia  #连接mydb数据库，没有则自动创建
-myset = db.house_detail#使用test_set集合，没有则自动创建
-
+#获取房源列表
 f = codecs.open("house_list.txt", "r", "UTF-8")
 house_list = eval(f.read())
-house_list_delete = {}
-for (key,value) in house_list.items():
-    id =  int(re.findall(r"[0-9]+", key)[0])
-    print("开始读取url:",key,end="...")
-    if not myset.find_one({"_id":id}):
-        try:
-            html = urllib.request.urlopen(key)
-            house = get_house_detail(html)
-            print("成功!",end="")
-            myset.insert(house)
-            print("写入数据库成功!")
-        except urllib.error.HTTPError as e:
-            house_list_delete[key] = value
-            print(e.code, e.reason)
-        except Exception as e:
-            print(e)
-    else:
-        print("发现重复键，未写入数据库!")
-
-    # myset.update( document = house, upsert=True)
+ttt = []
+for (key, value) in house_list.items:
+    ttt.append(key)
 
 
-print("asdf;asdkfj")
+
+
+# house_list = get_house_dict("https://zz.lianjia.com/ershoufang/")
+
+(house_list_delete, house_list_error) = get_houselist_detail(house_list, MongoClient('localhost', 27017))
+
+#记录完成情况
+finish = len(house_list)
+delete = len(house_list_delete)
+err = len(house_list_error)
+print("任务结束，成功" + str(finish - delete - err) + "条，消失" + str(delete) + "条，出错" + str(err) + "条。")
+print("详见house_list_delete.txt, house_list_error.txt")
+f = codecs.open("house_list_delete.txt", "w", "UTF-8")
+f.write(str(house_list_delete))
+f.close()
+
+f = codecs.open("house_list_error.txt", "w", "UTF-8")
+f.write(str(house_list_error))
+f.close()
