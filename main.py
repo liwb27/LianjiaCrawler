@@ -23,8 +23,12 @@ delete = len(house_list_delete)
 err = len(house_list_error)
 print("任务结束，成功" + str(finish - delete - err) + "条，消失" + str(delete) + "条，出错" + str(err) + "条。")
 print("详见house_list_delete.txt, house_list_error.txt")
+#存储已消失房源列表
+f = codecs.open("house_list_delete.txt", "r", "UTF-8")
+house_list_delete_fromfile = eval(f.read())
+f.close()
 f = codecs.open("house_list_delete.txt", "w", "UTF-8")
-f.write(str(house_list_delete))
+f.write(str(list(set(house_list_delete) | set(house_list_delete_fromfile))))
 f.close()
 
 f = codecs.open("house_list_error.txt", "w", "UTF-8")
