@@ -17,7 +17,7 @@
 
 ## 依赖库
 > BeautifulSoup
->> 安装：pip install bs4
+>> 安装：pip install beautifulsoup4
 
 > pymongo
 >> 安装：pip install pymongo

@@ -7,7 +7,7 @@ from HouseDetail import get_houselist_detail
 from HouseList import get_house_list
 
 #控制参数
-is_offline = True #是否重新爬取房源列表
+is_offline = False #是否重新爬取房源列表
 is_update_db = True #是否更新数据库中已有条目
 mongo_conn = MongoClient('localhost', 27017) #数据库连接
 url = "https://zz.lianjia.com/ershoufang/" #链家二手房链接，可爬取不同城市
