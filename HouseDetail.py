@@ -96,10 +96,9 @@ def get_house_detail(html):
     house = {}
     bsObj = BeautifulSoup(html, "html.parser")
 
-
     #价格
-    house["价格"] = float(bsObj.find("div", {"class":"price"}).span.text) # 房屋价格，未解析单位，默认为万
-    house["单价"] = float(re.findall("[0-9.]+", bsObj.find("div", {"class":"unitPrice"}).span.text)[0]) #元/平米
+    house["价格"] = {str(datetime.date.today()) : float(bsObj.find("div", {"class":"price"}).span.text)} # 房屋价格，未解析单位，默认为万
+    house["单价"] = {str(datetime.date.today()) : float(re.findall("[0-9.]+", bsObj.find("div", {"class":"unitPrice"}).span.text)[0])} #元/平米
     #基本属性
     table_introContent = bsObj.find("div", {"class":"introContent"})
     table_base = table_introContent.find("div", {"class":"base"}).find("div", {"class":"content"}).ul.findAll("li")
@@ -151,23 +150,28 @@ def get_houselist_detail(house_list, conn):
         id =  int(re.findall(r"[0-9]+", key)[0])
         print("开始读取"+str(num)+"/"+str(count),key,end="  ")
         num = num + 1
-        if not myset.find_one({"_id":id}):
-            try:
-                html = urllib.request.urlopen(key)
-                house = get_house_detail(html)
-                print("成功!",end="")
-                myset.insert(house)
-                print("写入数据库成功!")
-                # house_list_finished.append(key)
-            except urllib.error.HTTPError as e:
-                house_list_delete.append(key)
-                print(e.code, e.reason)
-            except Exception as e:
-                house_list_error.append(key)
-                print(e)
-        else:
-            # house_list_finished.append(key)
-            print("发现重复键，未写入数据库!")
+        try:
+            html = urllib.request.urlopen(key)
+            house = get_house_detail(html)
+            old_house = myset.find_one({"_id":id})
+            myset.update({"_id":id}, house, upsert=True)
+
+            # if not old_house:
+            #     myset.insert(house)
+            #     print("新增数据库条目成功!")
+            # else:
+            #     old_house["价格"].update(house["价格"])
+            #     house["价格"] = old_house["价格"]
+            #     old_house["单价"].update(house["单价"])
+            #     house["单价"] = old_house["单价"]
+            #     myset.save(house)
+            #     print("更新数据库条目成功!")
+        except urllib.error.HTTPError as e:
+            house_list_delete.append(key)
+            print(e.code, e.reason)
+        except Exception as e:
+            house_list_error.append(key)
+            print(e)
     return (house_list_delete, house_list_error)
 
 def test():
