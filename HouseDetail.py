@@ -133,7 +133,7 @@ def get_house_detail(html):
     #返回值
     return house
 
-def get_houselist_detail(house_list, conn):
+def get_houselist_detail(house_list, conn, update = True):
     '''
     分析house_list中所有的房源数据，结果存入数据库中
     '''
@@ -154,18 +154,20 @@ def get_houselist_detail(house_list, conn):
             html = urllib.request.urlopen(key)
             house = get_house_detail(html)
             old_house = myset.find_one({"_id":id})
-            myset.update({"_id":id}, house, upsert=True)
-
-            # if not old_house:
-            #     myset.insert(house)
-            #     print("新增数据库条目成功!")
-            # else:
-            #     old_house["价格"].update(house["价格"])
-            #     house["价格"] = old_house["价格"]
-            #     old_house["单价"].update(house["单价"])
-            #     house["单价"] = old_house["单价"]
-            #     myset.save(house)
-            #     print("更新数据库条目成功!")
+            # myset.update({"_id":id}, house, upsert=True)
+            if not old_house:
+                myset.insert(house)
+                print("新增数据库条目成功!")
+            else:
+                if update:
+                    old_house["价格"].update(house["价格"])
+                    house["价格"] = old_house["价格"]
+                    old_house["单价"].update(house["单价"])
+                    house["单价"] = old_house["单价"]
+                    myset.save(house)
+                    print("更新数据库条目成功!")
+                else:
+                    print("跳过已存在条目！")
         except urllib.error.HTTPError as e:
             house_list_delete.append(key)
             print(e.code, e.reason)
