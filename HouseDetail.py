@@ -1,8 +1,11 @@
-from bs4 import BeautifulSoup
+'''
+房源详细信息相关函数
+'''
 import codecs
 import re
 import datetime
-from GetLianjiaHtml import *
+from bs4 import BeautifulSoup
+from GetLianjiaHtml import get_lianjian_html
 
 def house_detail_switcher(label):
     def parse_huxing(text):

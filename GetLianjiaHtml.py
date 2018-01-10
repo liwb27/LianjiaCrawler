@@ -1,22 +1,20 @@
-import urllib.request
+'''
+获取html源码
+'''
 import requests
-import random
-import time
+# import random
+
 def get_lianjian_html(url):
-    # req = urllib.request.Request(url, headers=headers)
-    # html = urllib.request.urlopen(req)
     try:
         # headers['User-Agent'] = random.choice(user_agent_list)
         html =session.get(url, headers=headers)
-        # html =requests.get(url, headers=headers, allow_redirects=False)
-        if html.status_code == 301:
+        if html.status_code == 301:#重定向
             raise Exception
-        if html.status_code == 404:
+        if html.status_code == 404:#页面未找到
             return None
     except Exception as e:
         print(e)
         return None
-    # time.sleep(1)
     return html.content
 
 session = requests.Session()
