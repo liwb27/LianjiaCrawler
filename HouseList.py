@@ -101,6 +101,12 @@ def parse_aera(url):
         (item.subAera, item.houseCount) = parse_subaera(item.aeraUrl, url)
         print("房源共：" + str(item.houseCount) + "套")
 
+    #save aeralist
+    f = codecs.open('aera_list.txt', 'w', "UTF-8")
+    s = str(aeraList)
+    f.write(s)
+    f.close()
+
     return aeraList
 
 def parse_subaera(url, home_url):
@@ -166,3 +172,9 @@ def get_house_url(bsObj):
     for a in bsObj.find("ul", {"class":"sellListContent"}).findAll("a", {"class":"img"}):
         urllist.append(a.attrs["href"])
     return urllist
+
+def test():
+    parse_aera("https://zz.lianjia.com/ershoufang/")
+
+if __name__ == "__main__":
+    test()

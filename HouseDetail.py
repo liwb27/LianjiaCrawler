@@ -92,7 +92,8 @@ def get_house_detail(html):
     从html文本中获取房屋详细信息
     '''
     #todo： 判断房屋时在售还是售出，现默认为在售
-
+    if html == None:
+        return {}
     house = {}
     bsObj = BeautifulSoup(html, "html.parser")
 
@@ -152,25 +153,25 @@ def get_houselist_detail(house_list, conn, update = True):
         num = num + 1
         try:
             html = get_lianjian_html(key)
-            house = get_house_detail(html)
-            old_house = myset.find_one({"_id":id})
-            # myset.update({"_id":id}, house, upsert=True)
-            if not old_house:
-                myset.insert(house)
-                print("新增数据库条目成功!")
+            if html == None:
+                house_list_delete.append(key)
             else:
-                if update:
-                    old_house["价格"].update(house["价格"])
-                    house["价格"] = old_house["价格"]
-                    old_house["单价"].update(house["单价"])
-                    house["单价"] = old_house["单价"]
-                    myset.save(house)
-                    print("更新数据库条目成功!")
+                house = get_house_detail(html)
+                old_house = myset.find_one({"_id":id})
+                # myset.update({"_id":id}, house, upsert=True)
+                if not old_house:
+                    myset.insert(house)
+                    print("新增数据库条目成功!")
                 else:
-                    print("跳过已存在条目！")
-        except urllib.error.HTTPError as e:
-            house_list_delete.append(key)
-            print(e.code, e.reason)
+                    if update:
+                        old_house["价格"].update(house["价格"])
+                        house["价格"] = old_house["价格"]
+                        old_house["单价"].update(house["单价"])
+                        house["单价"] = old_house["单价"]
+                        myset.save(house)
+                        print("更新数据库条目成功!")
+                    else:
+                        print("跳过已存在条目！")
         except Exception as e:
             house_list_error.append(key)
             print(e)
@@ -179,7 +180,7 @@ def get_houselist_detail(house_list, conn, update = True):
 def test():
 
 
-    f = codecs.open("house_list_error.txt", 'r', "UTF-8")
+    f = codecs.open("house_list.txt", 'r', "UTF-8")
     urllist = eval(f.read())
     for url in urllist:
         html = get_lianjian_html(url)
