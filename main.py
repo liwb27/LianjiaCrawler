@@ -12,11 +12,6 @@ is_update_db = True #是否更新数据库中已有条目
 mongo_conn = MongoClient('localhost', 27017) #数据库连接
 url = "https://zz.lianjia.com/ershoufang/" #链家二手房链接，可爬取不同城市
 
-#写入User Agent信息
-head = {}
-head['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'
-req = urllib.request.Request(url, headers=head)
-
 #获取房源列表
 house_list = get_house_list(url, offline = is_offline)
 

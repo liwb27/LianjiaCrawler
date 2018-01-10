@@ -2,8 +2,8 @@ import re
 import os
 import urllib.request
 import codecs
-from urllib.request import urlopen
 from bs4 import BeautifulSoup
+from GetLianjiaHtml import *
 
 class Aera:
     subAera = []
@@ -17,7 +17,7 @@ class Aera:
         if new_url.count != 0:
             self.aeraUrl = home_url + new_url[0]
         else:
-            raise Exception("没有找到区域的url","Aera.py")
+            raise Exception("没有找到区域的url")
 
     def get_subaera_dict(self):
         subAeraDict = {}
@@ -84,7 +84,7 @@ def parse_aera(url):
     '''
     从url中得到区域列表和每个区域包含的子区域
     '''
-    html = urlopen(url)
+    html = get_lianjian_html(url)
     bsObj = BeautifulSoup(html, "html.parser")
 
     totalNumber = int( bsObj.find("h2", {"class":"total fl"}).find("span").text )#房源总数
@@ -107,7 +107,7 @@ def parse_subaera(url, home_url):
     '''
     获取子区域
     '''
-    html = urlopen(url)
+    html = get_lianjian_html(url)
     bsObj = BeautifulSoup(html, "html.parser")
 
     totalNumber = int( bsObj.find("h2", {"class":"total fl"}).find("span").text )#房源总数
@@ -128,7 +128,7 @@ def parse_house_url(url):
     '''
     从url中解析所有房源，逐页进行，返回所有房源列表
     '''
-    html = urlopen(url)
+    html = get_lianjian_html(url)
     bsObj = BeautifulSoup(html, "html.parser")
 
     totalNumber = int( bsObj.find("h2", {"class":"total fl"}).find("span").text )#房源总数
@@ -153,7 +153,7 @@ def parse_house_url(url):
     houselist.extend(get_house_url(bsObj))
     for i in range(2,pageMax+1):
         print("正在读取第" + str(i) + "页...")
-        html_tmp = urlopen(url + "pg" + str(i))
+        html_tmp = get_lianjian_html(url + "pg" + str(i))
         bs_tmp = BeautifulSoup(html_tmp, "html.parser")
         houselist.extend(get_house_url(bs_tmp))
     return houselist #返回list,未去除重复url

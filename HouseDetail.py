@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import codecs
 import re
 import datetime
-import urllib.request
+from GetLianjiaHtml import *
 
 def house_detail_switcher(label):
     def parse_huxing(text):
@@ -151,7 +151,7 @@ def get_houselist_detail(house_list, conn, update = True):
         print("开始读取"+str(num)+"/"+str(count),key,end="  ")
         num = num + 1
         try:
-            html = urllib.request.urlopen(key)
+            html = get_lianjian_html(key)
             house = get_house_detail(html)
             old_house = myset.find_one({"_id":id})
             # myset.update({"_id":id}, house, upsert=True)
@@ -177,15 +177,12 @@ def get_houselist_detail(house_list, conn, update = True):
     return (house_list_delete, house_list_error)
 
 def test():
-    url = "https://zz.lianjia.com/ershoufang/"
-    head = {}
-    head['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'
-    req = urllib.request.Request(url, headers=head)
+
 
     f = codecs.open("house_list_error.txt", 'r', "UTF-8")
     urllist = eval(f.read())
     for url in urllist:
-        html = urllib.request.urlopen(url)
+        html = get_lianjian_html(url)
         house = get_house_detail(html)
         print(house)
     print("done")
