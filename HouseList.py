@@ -7,15 +7,21 @@ import codecs
 import pickle
 from bs4 import BeautifulSoup
 from GetLianjiaHtml import get_lianjian_html
+import HouseDetail
+import Settings
+import datetime
+
 
 class Aera:
     subAera = []
     houseCount = 0
     aeraUrl = ""
     aeraName = ""
+
     def __init__(self, name, url, home_url):
         self.aeraName = name
-        new_url = re.findall(r"(?<=/ershoufang/).*",url)#匹配/ershoufang/shangjiequ/中的shangjiequ/
+        # 匹配/ershoufang/shangjiequ/中的shangjiequ/
+        new_url = re.findall(r"(?<=/ershoufang/).*", url)
         if new_url.count != 0:
             self.aeraUrl = home_url + new_url[0]
         else:
@@ -30,12 +36,14 @@ class Aera:
             subAeraDict[subaera.aeraUrl] = subaera.aeraName
         return subAeraDict
 
+
 def save_aeralist(aera_list, saveFileName):
     byte_list = []
     for aera in aera_list:
         byte_data = pickle.dumps(aera)
         byte_list.append(byte_data)
     save_list(byte_list, saveFileName)
+
 
 def read_aeralist(saveFileName):
     byte_list = read_list(saveFileName)
@@ -44,6 +52,7 @@ def read_aeralist(saveFileName):
         aera = pickle.loads(byte_data)
         aeralist.append(aera)
     return aeralist
+
 
 def read_list(saveFileName):
     '''
@@ -61,77 +70,80 @@ def read_list(saveFileName):
 
     return house_from_file
 
-def save_list(house_list, saveFileName):
+
+def save_list(house_list, saveFileName, mode = 'w'):
     '''
     将房源url列表存盘
     '''
-    f = codecs.open(saveFileName, 'w', "UTF-8")
+    f = codecs.open(saveFileName, mode, "UTF-8")
     s = str(house_list)
     f.write(s)
     f.close()
 
-def crawl_house_list(aeras, brief_mode = False):
+
+def crawl_house_list(aeras, brief_mode=False):
     '''
     从首页url开始，获取所有房源详细url
     aeras：子区域列表
     url：起始页url
     parse_house_info：是否读取房源简要信息
     '''
-    #获取所有区域，并去除重复子区域
+    # 获取所有区域，并去除重复子区域
     subAeraDict = {}
     for aera in aeras:
         subAeraDict.update(aera.get_subaera_dict())
 
-    #收集每个子区域
+    # 收集每个子区域
     house_list = []
     brief_list = []
     for (sub_aera_url, sub_aera_name) in subAeraDict.items():
         print("开始收集[" + sub_aera_name + "]子区域...", end="")
-        # tmplist = crawl_houselist_from_url(sub_aera_url)
-
-        #解析子区域包含的所有网页
+        # 解析子区域包含的所有网页
         html = get_lianjian_html(sub_aera_url)
         bsObj = BeautifulSoup(html, "html.parser")
 
-        totalNumber = int( bsObj.find("h2", {"class":"total fl"}).find("span").text )#房源总数
-        if totalNumber > 30*99 : #链家只能查找99页，每页30个，若房源数大于99*30则无法全部抓取
+        totalNumber = int(bsObj.find(
+            "h2", {"class": "total fl"}).find("span").text)  # 房源总数
+        if totalNumber > 30 * 99:  # 链家只能查找99页，每页30个，若房源数大于99*30则无法全部抓取
             print("Warning! 房源数过多，无法全部抓取，url:", sub_aera_url)
         if totalNumber == 0:
             print("房源总数为0，", sub_aera_url)
             continue
 
-        #获取房源总页数
+        # 获取房源总页数
         try:
-            pagebox = bsObj.find("div", {"class":"page-box house-lst-page-box"}).attrs["page-data"]
+            pagebox = bsObj.find(
+                "div", {"class": "page-box house-lst-page-box"}).attrs["page-data"]
             pageMax = int(re.findall(r"(?<=\"totalPage\":)\d*", pagebox)[0])
             print("共" + str(pageMax) + "页")
-        except: 
+        except:
             print("Exception: 未找到页码总数，已跳过")
             continue
 
-        #获取每页的房源url
+        # 获取每页的房源url
         subaera_houselist = []
         subaera_brieflist = []
         print("正在读取第1页...")
-        (urllist, brief) = parse_house_url(bsObj, brief_mode)
+        (urllist, brief) = parse_house_url(bsObj, sub_aera_url, brief_mode)
         subaera_houselist.extend(urllist)
         subaera_brieflist.extend(brief)
-        for i in range(2,pageMax+1):
+        for i in range(2, pageMax + 1):
             print("正在读取第" + str(i) + "页...")
             html_tmp = get_lianjian_html(sub_aera_url + "pg" + str(i))
             bs_tmp = BeautifulSoup(html_tmp, "html.parser")
-            (urllist, brief) = parse_house_url(bs_tmp, brief_mode)
+            (urllist, brief) = parse_house_url(bs_tmp, sub_aera_url + "pg" + str(i), brief_mode)
             subaera_houselist.extend(urllist)
             subaera_brieflist.extend(brief)
-        #合并子区域信息到总列表
+        # 合并子区域信息到总列表
         house_list.extend(subaera_houselist)
         brief_list.extend(subaera_brieflist)
         print("[" + sub_aera_name + "]，共" + str(len(subaera_houselist)) + "条")
-    
+
     count = len(house_list)
     print("共获取房源" + str(count) + "条")
 
     return (house_list, brief_list)
+
 
 def crawl_aera(url):
     '''
@@ -140,22 +152,27 @@ def crawl_aera(url):
     html = get_lianjian_html(url)
     bsObj = BeautifulSoup(html, "html.parser")
 
-    AeraList_html = bsObj.find("div", {"data-role":"ershoufang"}).findAll("a")#区域列表
+    AeraList_html = bsObj.find(
+        "div", {"data-role": "ershoufang"}).findAll("a")  # 区域列表
     aeraList = []
     for item in AeraList_html:
         aera = Aera(item.text, item.attrs['href'], url)
         aeraList.append(aera)
 
-    #子区域处理
+    # 子区域处理
     for item in aeraList:
         print("发现区域：[" + item.aeraName + "]，", end="")
-        bsObj = BeautifulSoup(get_lianjian_html(item.aeraUrl), "html.parser") #打开每个区域的页面查找其子区域
-        totalNumber = int( bsObj.find("h2", {"class":"total fl"}).find("span").text )#区域房源总数
+        bsObj = BeautifulSoup(get_lianjian_html(
+            item.aeraUrl), "html.parser")  # 打开每个区域的页面查找其子区域
+        totalNumber = int(bsObj.find(
+            "h2", {"class": "total fl"}).find("span").text)  # 区域房源总数
         if totalNumber != 0:
-            SubAeraList_html = bsObj.find("div", {"data-role":"ershoufang"}).findAll("div")[1].findAll("a")#子区域列表
+            SubAeraList_html = bsObj.find(
+                "div", {"data-role": "ershoufang"}).findAll("div")[1].findAll("a")  # 子区域列表
             SubAeraList = []
             for subaera_html in SubAeraList_html:
-                subaera = Aera(subaera_html.text, subaera_html.attrs['href'], url)
+                subaera = Aera(subaera_html.text,
+                               subaera_html.attrs['href'], url)
                 SubAeraList.append(subaera)
             item.subAera = SubAeraList
             item.houseCount = totalNumber
@@ -163,54 +180,102 @@ def crawl_aera(url):
 
     return aeraList
 
-def crawl_houselist_from_url(url):
-    '''
-    从url中解析所有房源，逐页进行，返回所有房源列表
-    '''
-    html = get_lianjian_html(url)
-    bsObj = BeautifulSoup(html, "html.parser")
 
-    totalNumber = int( bsObj.find("h2", {"class":"total fl"}).find("span").text )#房源总数
-    if totalNumber > 30*99 : #链家只能查找99页，每页30个，若房源数大于99*30则无法全部抓取
-        print("Warning! 房源数过多，无法全部抓取，url:", url)
-    if totalNumber == 0:
-        print("房源总数为0，", url)
-        return []
+# def crawl_houselist_from_url(url):
+#     '''
+#     从url中解析所有房源，逐页进行，返回所有房源列表
+#     '''
+#     html = get_lianjian_html(url)
+#     bsObj = BeautifulSoup(html, "html.parser")
 
-    #获取房源总页数
-    try:
-        pagebox = bsObj.find("div", {"class":"page-box house-lst-page-box"}).attrs["page-data"]
-        pageMax = int(re.findall(r"(?<=\"totalPage\":)\d*", pagebox)[0])
-        print("共" + str(pageMax) + "页")
-    except: 
-        print("Exception: 未找到页码总数，已跳过")
-        return []
+#     totalNumber = int(bsObj.find(
+#         "h2", {"class": "total fl"}).find("span").text)  # 房源总数
+#     if totalNumber > 30 * 99:  # 链家只能查找99页，每页30个，若房源数大于99*30则无法全部抓取
+#         print("Warning! 房源数过多，无法全部抓取，url:", url)
+#     if totalNumber == 0:
+#         print("房源总数为0，", url)
+#         return []
 
-    #获取每页的房源url
-    houselist = []
-    print("正在读取第1页...")
-    houselist.extend(parse_house_url(bsObj))
-    for i in range(2,pageMax+1):
-        print("正在读取第" + str(i) + "页...")
-        html_tmp = get_lianjian_html(url + "pg" + str(i))
-        bs_tmp = BeautifulSoup(html_tmp, "html.parser")
-        houselist.extend(parse_house_url(bs_tmp))
-    return houselist #返回list,未去除重复url
+#     # 获取房源总页数
+#     try:
+#         pagebox = bsObj.find(
+#             "div", {"class": "page-box house-lst-page-box"}).attrs["page-data"]
+#         pageMax = int(re.findall(r"(?<=\"totalPage\":)\d*", pagebox)[0])
+#         print("共" + str(pageMax) + "页")
+#     except:
+#         print("Exception: 未找到页码总数，已跳过")
+#         return []
 
-def parse_house_url(bsObj, brief_mode = False):
+#     # 获取每页的房源url
+#     houselist = []
+#     print("正在读取第1页...")
+#     houselist.extend(parse_house_url(bsObj))
+#     for i in range(2, pageMax + 1):
+#         print("正在读取第" + str(i) + "页...")
+#         html_tmp = get_lianjian_html(url + "pg" + str(i))
+#         bs_tmp = BeautifulSoup(html_tmp, "html.parser")
+#         houselist.extend(parse_house_url(bs_tmp))
+#     return houselist  # 返回list,未去除重复url
+
+
+def parse_house_url(bsObj, url, brief_mode=False):
     '''
     从bsObj中获取所有的房源url
     仅在crawl_houselist_from_url中调用
     '''
     urllist = []
     brief = {}
-    #todo:读取brief，写入数据库
-    for a in bsObj.find("ul", {"class":"sellListContent"}).findAll("a", {"class":"img"}):
-        urllist.append(a.attrs["href"])
-    return (urllist,brief)
+    db = Settings.MONGO_CONN.lianjia
+    myset = db.house_detail
+
+    for li in bsObj.find("ul", {"class": "sellListContent"}).findAll("li", {"class": "clear"}):
+        houseurl = li.a.attrs["href"]
+        urllist.append(houseurl)
+        if brief_mode:  # 读取brief，写入数据库
+            try:
+                brief = {}
+                brief['_id'] = int(re.findall(r"[0-9]+", houseurl)[0])
+                brief['title'] = li.find('div', {'class': 'title'}).text
+                attrs = li.find('div', {'class': 'address'}).text.split('|')
+                brief['小区名称'] = attrs[0].strip()
+                brief['房屋户型'] = HouseDetail.house_detail_switcher(
+                    '房屋户型')(attrs[1].strip())
+                brief['建筑面积'] = float(re.findall(r"[0-9.]+", attrs[2].strip())[0])
+                brief['房屋朝向'] = HouseDetail.house_detail_switcher(
+                    '房屋朝向')(attrs[3].strip())
+                if len(attrs) >= 5:
+                    brief['装修情况'] = attrs[4].strip()
+                brief['所在楼层'] = li.find('span', {'class': 'positionIcon'}).text
+                brief['所在区域'] = li.find('div', {'class': 'positionInfo'}).a.text
+                price = {}
+                div_price = li.find('div', {'class': 'priceInfo'})
+                price['价格'] = {str(datetime.date.today()): float(re.findall(
+                    r"[0-9.]+", div_price.find('div', {'class': 'totalPrice'}).text)[0])}
+                price['单价'] = {str(datetime.date.today()): float(re.findall(
+                    r"[0-9.]+", div_price.find('div', {'class': 'unitPrice'}).text)[0])}
+
+                old_house = myset.find_one({"_id": brief['_id']})
+                if not old_house:
+                    brief.update(price)
+                    myset.insert(brief)
+                    # print("新增数据库条目成功!")
+                else:
+                    old_house.update(brief)
+                    old_house["价格"].update(price["价格"])
+                    old_house["单价"].update(price["单价"])
+                    myset.save(old_house)
+                    # print("更新数据库条目成功!")
+            except Exception as e:
+                print('house_id:' + url)
+                print(e)
+                save_list(url,'brief_error.txt','a')
+
+    return (urllist, brief)
+
 
 def test():
     crawl_aera("https://zz.lianjia.com/ershoufang/")
+
 
 if __name__ == "__main__":
     test()
