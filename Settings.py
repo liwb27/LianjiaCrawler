@@ -5,7 +5,7 @@
 from pymongo import MongoClient
 
 # 控制参数
-OFFLINE_MODE = False  # 是否重新爬取房源列表，=false时会忽略QUICK_MODE
+OFFLINE_MODE = False  # 是否重新爬取房源列表，=false时会忽略BRIEF_MODE
 BRIEF_MODE = True  # true：不打开房源单独页面，直接从区域页面读取房源简要信息；false：打开每个房源url，速度慢；
 # offline与quick_mode均为true时，不爬取数据
 

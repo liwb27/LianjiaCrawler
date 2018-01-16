@@ -1,23 +1,39 @@
 # LianjiaCrawler
 ## 文件说明
-> main.py 主程序，包含以下控制参数：<br>
->> is_offline：控制是否在线爬取房源url列表，离线模式下读取本地house_list.txt中存储的房源url列表，在线模式下读取本地列表后与在线抓取的列表合并。<br>
->> is_update_db：在数据库中发现相同ID的房源后的操作，True：更新数据库，False：跳过该房源<br>
->> mongo_conn：mongodb数据库连接<br>
->> url：链家网站地址，更改次地址以爬取不同的城市<br>
 
-> houselist.py 
->> 爬取房源url列表<br>
+ main.py 主程序，通过控制参数实现不同模式<br>
 
-> housedetail.py 
->> 从房源url中爬取房源详细信息<br>
+ settings.py 包含以下控制参数：
+> LIANJIA_URL 链家网址，暂时只测试了郑州<br>
+
+> OFFLINE_MODE<br>
+>> TRUE:在线爬取房源列表
+>> FALSE:使用本地房源列表，忽略BRIEF_MODE=TRUE
+
+> BRIEF_MODE<br>
+>> TRUE:不打开房源单独页面，直接从区域页面读取房源简要信息
+>> FALSE:打开每个房源url获取更多信息，速度慢
+
+> MONGO_CONN 数据库链接<br>
+
+> IS_UPDATE_DB 找到已存在房源时是否更新数据库<br>
+
+> FILE_AERA_LIST 区域列表文件名<br>
+
+> FILE_HOUSE_LIST 房源列表文件名<br>
+
+> FILE_HOUSE_DELETE_LIST 已删除房源文件名<br>
+
+> FILE_HOUSE_ERROR_LIST 解析错误房源列表<br>
+
+ houselist.py 爬取房源url列表<br>
+
+ housedetail.py 从房源url中爬取房源详细信息<br>
 
 ## 运行环境
 > Python 3.6
 
 ## 依赖库
 > BeautifulSoup
->> 安装：pip install beautifulsoup4
-
 > pymongo
->> 安装：pip install pymongo
+> requests
