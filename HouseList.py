@@ -249,20 +249,32 @@ def parse_house_url(bsObj, url, brief_mode=False):
                 brief['所在区域'] = li.find('div', {'class': 'positionInfo'}).a.text
                 price = {}
                 div_price = li.find('div', {'class': 'priceInfo'})
-                price['价格'] = {str(datetime.date.today()): float(re.findall(
-                    r"[0-9.]+", div_price.find('div', {'class': 'totalPrice'}).text)[0])}
-                price['单价'] = {str(datetime.date.today()): float(re.findall(
-                    r"[0-9.]+", div_price.find('div', {'class': 'unitPrice'}).text)[0])}
+                price['价格'] = {
+                    'date': str(datetime.date.today()),
+                    '价格': float(re.findall("[0-9.]+", div_price.find('div', {'class': 'totalPrice'}).text)[0])
+                }
+                price['单价'] = {
+                    'date': str(datetime.date.today()),
+                    '单价': float(re.findall("[0-9.]+", div_price.find('div', {'class': 'unitPrice'}).text)[0])
+                }
 
                 old_house = myset.find_one({"_id": brief['_id']})
                 if not old_house:
-                    brief.update(price)
+                    brief['价格'] = []
+                    brief['价格'].append(price['价格'])
+                    brief['单价'] = []
+                    brief['单价'].append(price['单价'])
                     myset.insert(brief)
                     # print("新增数据库条目成功!")
                 else:
                     old_house.update(brief)
-                    old_house["价格"].update(price["价格"])
-                    old_house["单价"].update(price["单价"])
+                    for item in old_house["价格"]:
+                        if item['date'] == price["价格"]['date']:
+                            isTodayFlag = True
+                            break
+                    if not isTodayFlag:
+                        old_house["价格"].append(price["价格"])
+                        old_house["单价"].append(price["单价"])
                     myset.save(old_house)
                     # print("更新数据库条目成功!")
             except Exception as e:

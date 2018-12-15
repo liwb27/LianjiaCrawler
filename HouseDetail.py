@@ -102,10 +102,12 @@ def get_house_detail(html):
     bsObj = BeautifulSoup(html, "html.parser")
 
     # 价格
-    house["价格"] = {str(datetime.date.today()): float(bsObj.find(
-        "div", {"class": "price"}).span.text)}  # 房屋价格，未解析单位，默认为万
-    house["单价"] = {str(datetime.date.today()): float(re.findall(
-        "[0-9.]+", bsObj.find("div", {"class": "unitPrice"}).span.text)[0])}  # 元/平米
+    house["价格"] = [{
+        'date': str(datetime.date.today()),
+        '价格': float(bsObj.find("div", {"class": "price"}).span.text)}]  # 房屋价格，未解析单位，默认为万
+    house["单价"] = [{
+        'date': str(datetime.date.today()),
+        '单价': float(re.findall("[0-9.]+", bsObj.find("div", {"class": "unitPrice"}).span.text)[0])}]  # 元/平米
     # 基本属性
     table_introContent = bsObj.find("div", {"class": "introContent"})
     table_base = table_introContent.find("div", {"class": "base"}).find(
@@ -177,10 +179,16 @@ def get_houselist_detail(house_list, conn, update=True):
                     print("新增数据库条目成功!")
                 else:
                     if update:
-                        old_house["价格"].update(house["价格"])
-                        house["价格"] = old_house["价格"]
-                        old_house["单价"].update(house["单价"])
-                        house["单价"] = old_house["单价"]
+                        for item in old_house["价格"]:
+                            if item['date'] == house["价格"][0]['date']:
+                                isTodayFlag = True
+                                break
+                        if not isTodayFlag:
+                            house["价格"].extend(old_house["价格"])
+                            house["单价"].extend(old_house["单价"])
+                        else:
+                            house["价格"] = old_house["价格"]
+                            house["单价"] = old_house["单价"]
                         myset.save(house)
                         print("更新数据库条目成功!")
                     else:
