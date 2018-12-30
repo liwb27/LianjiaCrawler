@@ -21,4 +21,6 @@ LIANJIA_URL = "https://zz.lianjia.com/ershoufang/"
 FILE_AERA_LIST = "aera_list.txt"
 FILE_HOUSE_LIST = "house_list.txt"
 FILE_HOUSE_DELETE_LIST = "house_list_delete.txt"
-FILE_HOUSE_ERROR_LIST = "house_list_error"
+FILE_HOUSE_ERROR_LIST = "house_list_error.txt"
+FILE_PAGE_ERROR_LIST = "page_list_error.txt"
+

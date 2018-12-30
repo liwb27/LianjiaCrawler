@@ -17,7 +17,7 @@ if not OFFLINE_MODE:
         aeralist = crawl_aera(LIANJIA_URL)
         save_aeralist(aeralist, FILE_AERA_LIST)
     # 获取房源列表
-    (house_list, brief_list) = crawl_house_list(aeralist, brief_mode=BRIEF_MODE)
+    (house_list, brief_list, error_page_list) = crawl_house_list(aeralist, brief_mode=BRIEF_MODE)
     # 合并两个列表，去除重复
     house_set = set(house_list) | set(house_list_from_file)
 else:  # 使用本地house_list
@@ -47,3 +47,5 @@ if BRIEF_MODE:
 else:
     house_list_success = house_set - set(house_list_delete)
 save_list(house_list_success, FILE_HOUSE_LIST)
+
+save_list(error_page_list, FILE_PAGE_ERROR_LIST)

@@ -103,10 +103,10 @@ def get_house_detail(html):
 
     # 价格
     house["价格"] = [{
-        'date': str(datetime.date.today()),
+        'date': datetime.datetime.strptime(str(datetime.date.today()),'%Y-%m-%d'),
         '价格': float(bsObj.find("div", {"class": "price"}).span.text)}]  # 房屋价格，未解析单位，默认为万
     house["单价"] = [{
-        'date': str(datetime.date.today()),
+        'date': datetime.datetime.strptime(str(datetime.date.today()),'%Y-%m-%d'),
         '单价': float(re.findall("[0-9.]+", bsObj.find("div", {"class": "unitPrice"}).span.text)[0])}]  # 元/平米
     # 基本属性
     table_introContent = bsObj.find("div", {"class": "introContent"})
@@ -162,6 +162,7 @@ def get_houselist_detail(house_list, conn, update=True):
     house_list_error = []
     count = len(house_list)
     num = 1
+
     for key in house_list:
         id = int(re.findall(r"[0-9]+", key)[0])
         print("开始读取" + str(num) + "/" + str(count), key, end="  ")
@@ -179,8 +180,9 @@ def get_houselist_detail(house_list, conn, update=True):
                     print("新增数据库条目成功!")
                 else:
                     if update:
+                        isTodayFlag = False
                         for item in old_house["价格"]:
-                            if item['date'] == house["价格"][0]['date']:
+                            if item['date'] == datetime.datetime.strptime(str(datetime.date.today()),'%Y-%m-%d'):
                                 isTodayFlag = True
                                 break
                         if not isTodayFlag:

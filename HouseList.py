@@ -11,7 +11,6 @@ import HouseDetail
 import Settings
 import datetime
 
-
 class Aera:
     subAera = []
     houseCount = 0
@@ -96,11 +95,16 @@ def crawl_house_list(aeras, brief_mode=False):
     # 收集每个子区域
     house_list = []
     brief_list = []
+    error_page_list = []
     for (sub_aera_url, sub_aera_name) in subAeraDict.items():
         print("开始收集[" + sub_aera_name + "]子区域...", end="")
         # 解析子区域包含的所有网页
-        html = get_lianjian_html(sub_aera_url)
-        bsObj = BeautifulSoup(html, "html.parser")
+        try:
+            html = get_lianjian_html(sub_aera_url)
+            bsObj = BeautifulSoup(html, "html.parser")
+        except:
+            error_page_list.append(sub_aera_url)
+            continue
 
         totalNumber = int(bsObj.find(
             "h2", {"class": "total fl"}).find("span").text)  # 房源总数
@@ -129,11 +133,22 @@ def crawl_house_list(aeras, brief_mode=False):
         subaera_brieflist.extend(brief)
         for i in range(2, pageMax + 1):
             print("正在读取第" + str(i) + "页...")
-            html_tmp = get_lianjian_html(sub_aera_url + "pg" + str(i))
-            bs_tmp = BeautifulSoup(html_tmp, "html.parser")
-            (urllist, brief) = parse_house_url(bs_tmp, sub_aera_url + "pg" + str(i), brief_mode)
-            subaera_houselist.extend(urllist)
-            subaera_brieflist.extend(brief)
+            try:
+                html_tmp = get_lianjian_html(sub_aera_url + "pg" + str(i))
+            except Exception as e:
+                print('page read error:' + sub_aera_url + "pg" + str(i))
+                error_page_list.append(sub_aera_url + "pg" + str(i))
+                html_tmp = None
+            if html_tmp != None:
+                try:
+                    bs_tmp = BeautifulSoup(html_tmp, "html.parser")
+                    (urllist, brief) = parse_house_url(bs_tmp, sub_aera_url + "pg" + str(i), brief_mode)
+                    subaera_houselist.extend(urllist)
+                    subaera_brieflist.extend(brief)
+                except:
+                    print('解析失败！', sub_aera_url + "pg" + str(i))
+
+
         # 合并子区域信息到总列表
         house_list.extend(subaera_houselist)
         brief_list.extend(subaera_brieflist)
@@ -141,8 +156,9 @@ def crawl_house_list(aeras, brief_mode=False):
 
     count = len(house_list)
     print("共获取房源" + str(count) + "条")
+    print('错误页面列表：', error_page_list)
 
-    return (house_list, brief_list)
+    return (house_list, brief_list, error_page_list)
 
 
 def crawl_aera(url):
@@ -245,19 +261,35 @@ def parse_house_url(bsObj, url, brief_mode=False):
                     '房屋朝向')(attrs[3].strip())
                 if len(attrs) >= 5:
                     brief['装修情况'] = attrs[4].strip()
-                brief['所在楼层'] = li.find('span', {'class': 'positionIcon'}).text
-                brief['所在区域'] = li.find('div', {'class': 'positionInfo'}).a.text
+                # floor
+                brief['所在区域'] = li.find('div', {'class': 'positionInfo'}).a.extract().text
+                floor_text = li.find('div', {'class': 'positionInfo'}).text.split()[0].split('(')
+                brief['所在楼层'] = {}
+                brief['所在楼层']['所在楼层'] = floor_text[0]
+                if len(floor_text) > 1:
+                    brief['所在楼层']['总楼层'] = floor_text[1].split(')')[0]
+                    brief['所在楼层']['结构'] = floor_text[1].split(')')[1]
+                # followinfo
+                followinfo_text = li.find('div', {'class': 'followInfo'}).text
+                followinfo_text_split = followinfo_text.split('/')
+                if len(followinfo_text_split) > 2:
+                    brief['发布时间'] = followinfo_text.split('/')[2]
+                brief['关注人数'] = int(re.findall(r"[0-9.]+", followinfo_text)[0])
+                brief['带看次数'] = int(re.findall(r"[0-9.]+", followinfo_text)[1])
+                # tag
+                brief['tag'] = []
+                for child in li.find('div', {'class': 'tag'}).select('span'):
+                    brief['tag'].append(child.text)
                 price = {}
                 div_price = li.find('div', {'class': 'priceInfo'})
                 price['价格'] = {
-                    'date': str(datetime.date.today()),
-                    '价格': float(re.findall("[0-9.]+", div_price.find('div', {'class': 'totalPrice'}).text)[0])
+                    'date': datetime.datetime.strptime(str(datetime.date.today()),'%Y-%m-%d'),
+                    '价格': float(re.findall(r"[0-9.]+", div_price.find('div', {'class': 'totalPrice'}).text)[0])
                 }
                 price['单价'] = {
-                    'date': str(datetime.date.today()),
-                    '单价': float(re.findall("[0-9.]+", div_price.find('div', {'class': 'unitPrice'}).text)[0])
+                    'date': datetime.datetime.strptime(str(datetime.date.today()),'%Y-%m-%d'),
+                    '单价': float(re.findall(r"[0-9.]+", div_price.find('div', {'class': 'unitPrice'}).text)[0])
                 }
-
                 old_house = myset.find_one({"_id": brief['_id']})
                 if not old_house:
                     brief['价格'] = []
@@ -268,8 +300,9 @@ def parse_house_url(bsObj, url, brief_mode=False):
                     # print("新增数据库条目成功!")
                 else:
                     old_house.update(brief)
+                    isTodayFlag = False
                     for item in old_house["价格"]:
-                        if item['date'] == price["价格"]['date']:
+                        if item['date'] == datetime.datetime.strptime(str(datetime.date.today()),'%Y-%m-%d'):
                             isTodayFlag = True
                             break
                     if not isTodayFlag:
@@ -286,8 +319,11 @@ def parse_house_url(bsObj, url, brief_mode=False):
 
 
 def test():
-    crawl_aera("https://zz.lianjia.com/ershoufang/")
-
+    # crawl_aera("https://zz.lianjia.com/ershoufang/")
+    sub_aera_url = 'https://zz.lianjia.com/ershoufang/zhongyuan/pg/3'
+    html_tmp = get_lianjian_html(sub_aera_url)
+    bs_tmp = BeautifulSoup(html_tmp, "html.parser")
+    (urllist, brief) = parse_house_url(bs_tmp, sub_aera_url, True)
 
 if __name__ == "__main__":
     test()
