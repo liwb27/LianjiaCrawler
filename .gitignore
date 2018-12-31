@@ -103,3 +103,4 @@ ENV/
 /.project
 *.txt
 .vscode/*
+/old_code
