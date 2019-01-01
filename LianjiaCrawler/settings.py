@@ -20,7 +20,7 @@ NEWSPIDER_MODULE = 'LianjiaCrawler.spiders'
 BASE_URL = 'https://app.api.lianjia.com'
 WX_BASE_URL = 'https://wechat.lianjia.com'
 CITY_ID = '410100'
-# LOG_LEVEL = 'INFO'
+LOG_LEVEL = 'INFO'
 #############################
 
 

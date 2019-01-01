@@ -1,6 +1,4 @@
 import scrapy
-from scrapy.utils.project import get_project_settings
-import time
 import json
 import math
 from LianjiaCrawler.items import ErShouFangItems
@@ -8,15 +6,14 @@ from LianjiaCrawler.ljapi.weixin import get_request
 
 
 class LianjiaSpiderWx(scrapy.Spider):
-    name = 'ljapi'
-    limit = 30
+    name = 'ljwxapi'
+    limit = 10 # 每次请求的房源数量，最大30，设为30时会出现无返回信息的问题
     def start_requests(self):
         """
         重写start_requests
         :return:
         """
         yield get_request(self.settings["CITY_ID"], 0, self.limit, self.parse)
-        # yield get_community_info(self.settings["CITY_ID"], self.parse)
 
     def parse(self, response):
         content = json.loads(response.body.decode())
@@ -25,9 +22,10 @@ class LianjiaSpiderWx(scrapy.Spider):
 
         self.parse_house_item(response)
         limit_offset = 0
-        for _ in range(0, total_count):  # 翻页操作
+        for _ in range(0, 100):  # 翻页操作
+        # for _ in range(0, total_count):  # 翻页操作
             limit_offset += self.limit  # 每页显示self.limit条数据，每次翻页递增self.limit条
-            yield get_request(self.settings["CITY_ID"], limit_offset, self.parse_house_item)
+            yield get_request(self.settings["CITY_ID"], limit_offset, self.limit, self.parse_house_item)
 
     def parse_house_item(self, response):
         """
@@ -37,13 +35,15 @@ class LianjiaSpiderWx(scrapy.Spider):
         """
         item = ErShouFangItems()
         content = json.loads(response.body.decode())
-        ershoufang_list = content["data"]["list"]
+        try:
+            ershoufang_list = content["data"]["list"]
+        except :
+            return
+            
         if len(ershoufang_list) > 0:
             for ershoufang in ershoufang_list:
-                # for key,val in item.fields.items():
-                #     item[key] = ershoufang_list[ershoufang][key]
-                item["house_code"] = ershoufang_list[ershoufang]["house_code"]
-                item["resblock_id"] = ershoufang_list[ershoufang]["resblock_id"]
-                item["resblock_name"] = ershoufang_list[ershoufang]["resblock_name"]
+                for key,val in item.fields.items():
+                    item[key] = ershoufang_list[ershoufang][key]
+
                 yield item
 

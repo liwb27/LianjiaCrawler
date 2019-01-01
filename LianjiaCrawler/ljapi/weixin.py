@@ -6,16 +6,23 @@ import base64
 import hashlib
 from urllib.parse import urlparse, parse_qs
 
-def get_request(city_id, offset, limit=30, callback=None):
+# 经过使用发现，该api在offset较小时保持正确，但offset过大后（大于1000），返回的数据均为重复值
+
+def get_request(city_id, offset, limit=10, callback=None):
     '''
     获取房屋信息，每次10条，根据offset翻页
     '''
-    url_template = 'https://wechat.lianjia.com/ershoufang/search' + "?city_id=%s&condition=&query=&order=&offset=%s&limit=%s&sign"
+    url_template = 'https://wechat.lianjia.com/ershoufang/search?city_id=%s&condition=&query=&order=&offset=%s&limit=%s&sign'
     url = url_template % (city_id, offset, limit)
     headers = {
         "time-stamp": str(int(time.time() * 1000)),
         "lianjia-source": "ljwxapp",
-        "authorization":  get_authorization(url)
+        "authorization":  get_authorization(url),
+        'Wx-Version': '6.6.1',
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60 MicroMessenger/6.6.1 NetType/WIFI Language/zh_CN',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/json',
+        'OS-Version': 'ios-iOS 10.3.3',
     }  # 定义header
 
     return scrapy.Request(url=url, headers=headers, callback=callback)
