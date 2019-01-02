@@ -13,6 +13,8 @@ class LianjiaSpider(scrapy.Spider):
     name = "lianjia"
     def __init__(self, update_mode=False, *args, **kwargs):
         super(LianjiaSpider, self).__init__(*args, **kwargs)
+        # update_mode = true时，强制重新爬取每个房源的页面
+        # 否则，会检查数据库中是否存在该房源，如存在则只增量更新当日价格，如不存在则爬取该房源信息
         self.update_mode = update_mode
         self.settings = get_project_settings()
         self.collection = MongoClient(self.settings['MONGO_URI'])[self.settings['MONGO_DBNAME']][self.settings['MONGO_COLLECTION_NAME']] 
@@ -99,6 +101,7 @@ class LianjiaSpider(scrapy.Spider):
         house_item = HouseItem()
         house_item['data'] = house
         house['_id'] = int(response.css('.houseRecord').css('.info').xpath('./text()').extract_first()) 
+        house['标题'] = ''# title
         house['关注数'] = int(response.xpath('//*[@id="favCount"]/text()').extract_first()) # 关注
         house['小区名称'] = response.css('.communityName').css('.info').xpath('./text()').extract_first()
         house['小区id'] = int(response.css('.communityName').css('.info').xpath('./@href').re(r"[0-9]+")[0])

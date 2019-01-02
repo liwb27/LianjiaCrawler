@@ -45,20 +45,20 @@ db.house_detail.aggregate([
     }
 ])
 // 区域均价
-db.house_detail.aggregate([
+db.house_detail.explain('executionStats').aggregate([
     {
-        "$unwind": "$单价"
+        "$unwind": "$价格"
     },
     {
         "$match": {
-            "单价.date": '2018-12-20'
+            "价格.date": new Date("2019-01-02")
         }
     },
     {
         $group: {
-            _id: "$所在区域",
+            _id: "$小区名称",
             count: { $sum: 1 },
-            avg: { $avg: "$单价.单价" }
+            avg: { $avg: "$价格.单价" }
         }
     },
     { "$sort": { "count": -1 } },
@@ -67,30 +67,49 @@ db.house_detail.aggregate([
 //按日期均值
 db.house_detail.aggregate([
     {
-        "$unwind": "$单价"
+        "$unwind": "$价格"
     },
     {
         $group: {
-            _id: "$单价.date",
+            _id: "$价格.date",
             count: { $sum: 1 },
-            avg: { $avg: "$单价.单价" }
+            avg: { $avg: "$价格.单价" }
         }
     },
+    { "$sort": { "$价格.date": -1 } },
 ]);
 
 
 db.house_detail.aggregate([
     {
-        "$unwind": "$单价"
+        "$unwind": "$价格"
     },
     {
         $group: {
             _id: {
-                "区域":"$所在区域",
-                "日期":"$单价.date"
+                "区域":"$小区名称",
+                "日期":"$价格.date"
             },
             count: { $sum: 1 },
-            avg: { $avg: "$单价.单价" }
+            avg: { $avg: "$价格.单价" }
+        }
+    },
+    { "$sort": { "avg": -1 } },
+]);
+
+
+db.house_detail.explain().aggregate([
+    {
+        "$unwind": "$价格"
+    },
+    {
+        $group: {
+            _id: {
+                "区域":"$小区名称",
+                "日期":"$价格.date"
+            },
+            count: { $sum: 1 },
+            avg: { $avg: "$价格.单价" }
         }
     },
     { "$sort": { "avg": -1 } },
