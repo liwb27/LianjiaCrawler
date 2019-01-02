@@ -17,10 +17,12 @@ NEWSPIDER_MODULE = 'LianjiaCrawler.spiders'
 ##### 我的设置################
 # REDIRECT_ENABLED = False
 # HTTPERROR_ALLOWED_CODES = [301]
-BASE_URL = 'https://app.api.lianjia.com'
-WX_BASE_URL = 'https://wechat.lianjia.com'
+BASE_URL = 'https://zz.lianjia.com'
 CITY_ID = '410100'
 LOG_LEVEL = 'INFO'
+MONGO_URI = 'mongodb://localhost:27017'
+MONGO_DBNAME = 'lianjia'
+MONGO_COLLECTION_NAME = 'house_detail'
 #############################
 
 
@@ -31,7 +33,7 @@ LOG_LEVEL = 'INFO'
 # ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 1
+# CONCURRENT_REQUESTS = 1
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
