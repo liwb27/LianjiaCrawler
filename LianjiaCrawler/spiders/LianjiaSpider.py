@@ -80,7 +80,7 @@ class LianjiaSpider(scrapy.Spider):
                         price['单价'] = float(item.css('.unitPrice').xpath('./span').re('[0-9.]+')[0])
                         price['date'] = date
                         # todo 关注、带看。。。
-                        self.log('parse house price: {0}'.format(id), level=logging.INFO)
+                        # self.log('parse house price: {0}'.format(id), level=logging.INFO)
                         yield priceItem
             else:
                 url = self.settings['BASE_URL'] + '/ershoufang/{0}.html'.format(id)
@@ -149,7 +149,7 @@ class LianjiaSpider(scrapy.Spider):
                     break
             if flag == True:
                 house['价格'].append(today_price)
-        self.log('parse house detail: {0}'.format(house['_id']), level=logging.INFO)
+        # self.log('parse house detail: {0}'.format(house['_id']), level=logging.INFO)
         yield house_item
 
 def house_detail_switcher(label):

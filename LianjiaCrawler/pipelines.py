@@ -57,5 +57,7 @@ class LianjiacrawlerPipeline(object):
                 {'_id': item['id']},
                 { '$push': { '价格': price } }
             )
+            # self.count += 1
+            # logging.info('---update price----current count:{0} ---------'.format(self.count))
         return item
 
