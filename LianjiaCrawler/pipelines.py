@@ -12,12 +12,13 @@ from LianjiaCrawler.items import HouseItem, PriceItem
 
 
 class LianjiacrawlerPipeline(object):
-    def __init__(self, mongo_uri, mongo_db, mongo_collection):
+    def __init__(self, mongo_uri, mongo_db, mongo_collection, price_collection):
         self.count = 0
         self.seen_house = set()
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.mongo_collection = mongo_collection
+        self.price_collection = price_collection
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -28,7 +29,8 @@ class LianjiacrawlerPipeline(object):
         return cls(
             mongo_uri=crawler.settings.get('MONGO_URI'),
             mongo_db=crawler.settings.get('MONGO_DBNAME'),
-            mongo_collection=crawler.settings.get('MONGO_COLLECTION_NAME'),            
+            mongo_collection=crawler.settings.get('MONGO_COLLECTION_NAME'),
+            price_collection=crawler.settings.get('MONGO_COLLECTION_PRICE_NAME'),
         )
 
     def open_spider(self, spider):
@@ -38,6 +40,7 @@ class LianjiacrawlerPipeline(object):
         self.client = MongoClient(self.mongo_uri)
         self.db = self.client[self.mongo_db]
         self.collection = self.db[self.mongo_collection]
+        self.collection2 = self.db[self.price_collection]
 
     def close_spider(self, spider):
         '''
@@ -49,15 +52,12 @@ class LianjiacrawlerPipeline(object):
         if type(item) == HouseItem:
             house = item['data']
             self.collection.replace_one({'_id': house['_id']}, house, upsert=True)
-            self.count += 1
-            logging.info('---update house----current count:{0} ---------'.format(self.count))
+            # self.count += 1
+            # logging.info('---update house----current count:{0} ---------'.format(self.count))
         elif type(item) == PriceItem:
             price = item['data']
-            self.collection.update_one(
-                {'_id': item['id']},
-                { '$push': { '价格': price } }
-            )
-            # self.count += 1
-            # logging.info('---update price----current count:{0} ---------'.format(self.count))
+            self.collection2.insert(price)
+            self.count += 1
+            logging.info('---update price----current count:{0} ---------'.format(self.count))
         return item
 

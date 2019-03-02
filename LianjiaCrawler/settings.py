@@ -23,6 +23,7 @@ LOG_LEVEL = 'INFO'
 MONGO_URI = 'mongodb://localhost:27017'
 MONGO_DBNAME = 'lianjia'
 MONGO_COLLECTION_NAME = 'house_detail'
+MONGO_COLLECTION_PRICE_NAME = 'house_price'
 #############################
 
 

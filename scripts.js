@@ -76,7 +76,7 @@ db.house_detail.aggregate([
             avg: { $avg: "$价格.单价" }
         }
     },
-    { "$sort": { "$价格.date": -1 } },
+    { "$sort": { "_id": -1 } },
 ]);
 
 

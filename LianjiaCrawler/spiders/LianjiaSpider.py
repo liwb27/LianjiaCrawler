@@ -17,7 +17,8 @@ class LianjiaSpider(scrapy.Spider):
         # 否则，会检查数据库中是否存在该房源，如存在则只增量更新当日价格，如不存在则爬取该房源信息
         self.update_mode = update_mode
         self.settings = get_project_settings()
-        self.collection = MongoClient(self.settings['MONGO_URI'])[self.settings['MONGO_DBNAME']][self.settings['MONGO_COLLECTION_NAME']] 
+        self.collection = MongoClient(self.settings['MONGO_URI'])[self.settings['MONGO_DBNAME']][self.settings['MONGO_COLLECTION_NAME']]
+        self.price_collection = MongoClient(self.settings['MONGO_URI'])[self.settings['MONGO_DBNAME']][self.settings['MONGO_COLLECTION_PRICE_NAME']]
 
     def start_requests(self):
         yield get_city_info(self.settings['CITY_ID'], self.parse)
@@ -58,45 +59,26 @@ class LianjiaSpider(scrapy.Spider):
         bizcircle = response.meta['bizcircle']        
         for item in response.css('.clear.LOGCLICKDATA'):
             id = int(item.xpath('./a/@href').re(r"[0-9]+")[0])
-            if not self.update_mode:
-                old_house = self.collection.find_one({"_id": id})
-                if not old_house: # 未收集过详细信息
-                    url = self.settings['BASE_URL'] + '/ershoufang/{0}.html'.format(id)
-                    yield scrapy.Request(url=url, callback=self.parse_detail, meta={'new':id, 'bizcircle': bizcircle})
-                else:
-                    # 解析价格，并发给pipeline
-                    flag = True
-                    date = datetime.datetime.strptime(str(datetime.date.today()),'%Y-%m-%d')
-                    for d in old_house['价格']:
-                        if d['date'] == date:
-                            flag = False
-                            break
-                    if flag == True:
-                        price = {}
-                        priceItem = PriceItem()
-                        priceItem['id'] = old_house['_id']
-                        priceItem['data'] = price
-                        price['总价'] = float(item.css('.totalPrice').xpath('./span').re('[0-9.]+')[0])
-                        price['单价'] = float(item.css('.unitPrice').xpath('./span').re('[0-9.]+')[0])
-                        price['date'] = date
-                        # todo 关注、带看。。。
-                        # self.log('parse house price: {0}'.format(id), level=logging.INFO)
-                        yield priceItem
-            else:
+            old_house = self.collection.find_one({"_id": id})
+            if not old_house or self.update_mode: # 未收集过详细信息，或强制收集详细信息
                 url = self.settings['BASE_URL'] + '/ershoufang/{0}.html'.format(id)
-                yield scrapy.Request(url=url, callback=self.parse_detail, meta={'unknow':id, 'bizcircle': bizcircle})
-        return HouseItem()
+                yield scrapy.Request(url=url, callback=self.parse_detail, meta={'new':id, 'bizcircle': bizcircle})
+            # 解析价格，并发给pipeline
+            date = datetime.datetime.strptime(str(datetime.date.today()),'%Y-%m-%d')
+            today = self.price_collection.find_one({"house_id": id, 'date': date})
+            if not today:
+                price = {}
+                priceItem = PriceItem()
+                priceItem['data'] = price
+                price['house_id'] = id
+                price['date'] = date
+                price['总价'] = float(item.css('.totalPrice').xpath('./span').re('[0-9.]+')[0])
+                price['单价'] = float(item.css('.unitPrice').xpath('./span').re('[0-9.]+')[0])
+                # todo 关注、带看。。。
+                # self.log('parse house price: {0}'.format(id), level=logging.INFO)
+                yield priceItem
     
     def parse_detail(self, response):
-        if 'unkown' in response.meta: # unkown house
-            id = response.meta['unkown']
-            old_house = self.collection.find_one({"_id": id})
-            if not old_house:
-                is_new = True
-            else:
-                is_new = False
-        else:
-            is_new = True
         house = {}
         house_item = HouseItem()
         house_item['data'] = house
@@ -133,22 +115,7 @@ class LianjiaSpider(scrapy.Spider):
         # tag
         house['tag'] = response.css('.tags.clear').css('.content').xpath('./a/text()').extract()
         # 房源特色 无用
-        # 价格
-        house['价格'] = [{
-            '总价': float(response.css('.total').xpath('./text()').extract_first()),
-            '单价': float(response.css('.unitPriceValue').xpath('./text()').extract_first()),
-            'date': datetime.datetime.strptime(str(datetime.date.today()),'%Y-%m-%d'),
-        }]
-        if not is_new: # 已有记录，更新信息，合并历史价格
-            today_price = house['价格']
-            house['价格'] = old_house['价格']
-            flag = True
-            for item in house['价格']:
-                if item['date'] == today_price['date']:
-                    flag = False
-                    break
-            if flag == True:
-                house['价格'].append(today_price)
+
         # self.log('parse house detail: {0}'.format(house['_id']), level=logging.INFO)
         yield house_item
 
