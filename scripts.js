@@ -114,3 +114,29 @@ db.house_detail.explain().aggregate([
     },
     { "$sort": { "avg": -1 } },
 ]);
+
+db.house_price.aggregate([
+    {
+        $group: {
+            _id: {
+                "日期":"$date"
+            },
+            count: { $sum: 1 },
+            avg: {$avg: "$单价"}
+        }
+    },
+    { "$sort": { "avg": 1 } },
+]);
+
+db.house_price.aggregate([
+    {
+        $group: {
+            _id: {
+                "日期":"$date"
+            },
+            count: { $sum: 1 },
+            avg: {$avg: "$单价"}
+        }
+    },
+    { "$sort": { "_id": -1 } },
+]);
