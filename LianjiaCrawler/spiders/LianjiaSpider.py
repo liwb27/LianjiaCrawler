@@ -21,25 +21,44 @@ class LianjiaSpider(scrapy.Spider):
         self.price_collection = MongoClient(self.settings['MONGO_URI'])[self.settings['MONGO_DBNAME']][self.settings['MONGO_COLLECTION_PRICE_NAME']]
 
     def start_requests(self):
-        yield get_city_info(self.settings['CITY_ID'], self.parse)
+        yield scrapy.Request(url=self.settings['BASE_URL'] + '/ershoufang', callback=self.parse)
 
     def parse(self, response):
         '''
-        分析get_city_info结果，并准备按照bizcircle进行爬取
+        分析区域，
         '''
-        try:
-            city_info = json.loads(response.body.decode())['data']['city_info']['info'][0]
-        except:
-            self.log('读取城市信息失败', level=logging.ERROR)
-            return
-        if city_info['city_id'] != int(self.settings['CITY_ID']):
-            self.log('错误的城市ID:'+ city_info['city_id'], level=logging.ERROR)
-            return
-        self.subway = city_info['subway_line'] # 记录地铁信息
-        for district in city_info['district']:
-            for bizcircle in district['bizcircle']:
-                url = self.settings['BASE_URL'] + '/ershoufang/' + bizcircle['bizcircle_quanpin'] + '/'
-                yield scrapy.Request(url=url, callback=self.parse_bizcircle, meta={'bizcircle':bizcircle})
+        self.subway = []
+        for link in response.xpath("//div[@data-role='ditiefang']/div[1]/a"):
+            line_id = re.findall(r"li[0-9]+", link.attrib['href'])[0][2:]
+            line_name = link.xpath('text()').extract_first()
+            self.subway.append({
+                'subway_line_id': line_id,
+                'subway_line_name': line_name,
+                'station': []
+            })
+            yield scrapy.Request(url=self.settings['BASE_URL']+link.attrib['href'], callback=self.parse_subway)
+            
+        for link in response.xpath("//div[@data-role='ershoufang']/div[1]/a"):
+            yield scrapy.Request(url=self.settings['BASE_URL']+link.attrib['href'], callback=self.parse_aera)
+
+    def parse_subway(self, response):
+        for link in response.xpath("//div[@data-role='ditiefang']/div[2]/a"):
+            line_id = re.findall(r"li[0-9]+", link.attrib['href'])[0][2:]            
+            station_id = re.findall(r"s[0-9]+", link.attrib['href'])[0][1:]
+            station_name = link.xpath('text()').extract_first()
+            for line in self.subway:
+                if line['subway_line_id'] == line_id:
+                    line['station'].append({
+                        'subway_station_id': station_id,
+                        'subway_station_name': station_name
+                    })
+
+    def parse_aera(self, response):
+        for link in response.xpath("//div[@data-role='ershoufang']/div[2]/a"):
+            bizcircle = {}
+            bizcircle['bizcircle_name'] = link.xpath('text()').extract_first()
+            url = self.settings['BASE_URL'] + link.attrib['href']
+            yield scrapy.Request(url=url, callback=self.parse_bizcircle, meta={'bizcircle':bizcircle})
     
     def parse_bizcircle(self, response):
         page_data = response.css('.page-box.house-lst-page-box').xpath('@page-data').re(r"(?<=\"totalPage\":)\d*")
@@ -88,7 +107,7 @@ class LianjiaSpider(scrapy.Spider):
         house['小区名称'] = response.css('.communityName').css('.info').xpath('./text()').extract_first()
         house['小区id'] = int(response.css('.communityName').css('.info').xpath('./@href').re(r"[0-9]+")[0])
         house['商圈名称'] = response.meta['bizcircle']['bizcircle_name']
-        house['商圈id'] = response.meta['bizcircle']['bizcircle_id']
+        # house['商圈id'] = response.meta['bizcircle']['bizcircle_id']
         subwar_href = response.css('.areaName').xpath('./a/@href').extract_first()
         if subwar_href != '':
             line_id = re.findall(r"li[0-9]+", subwar_href)[0][2:]
