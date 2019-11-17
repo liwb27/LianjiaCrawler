@@ -56,8 +56,42 @@ class LianjiacrawlerPipeline(object):
             # logging.info('---update house----current count:{0} ---------'.format(self.count))
         elif type(item) == PriceItem:
             price = item['data']
-            self.collection2.insert(price)
+            exist = self.collection2.find_one({
+                "house_id": price['house_id'],
+                'year': price['date'].year,
+                'month': price['date'].month,
+                'detail.day': {'$eq': price['date'].day}
+            })
+            if not exist:
+                self.collection2.update_one(
+                    {
+                        'house_id': price['house_id'],
+                        'year': price['date'].year,
+                        'month': price['date'].month,
+                    },
+                    {
+                        '$push': { 'detail': {'day': price['date'].day,'单价':price['单价'],'总价':price['总价']}},
+                        '$inc': { 'detailCount': 1}
+                    },
+                    upsert=True)
+            else:
+                self.collection2.update_one(
+                    {
+                        'house_id': price['house_id'],
+                        'year': price['date'].year,
+                        'month': price['date'].month,
+                        'detail.day':price['date'].day,
+                    },
+                    {
+                        '$set':{
+                            'detail.$.单价':price['单价'],
+                            'detail.$.总价':price['总价'],                            
+                        }
+                    }
+                )
+                
             self.count += 1
-            logging.info('---update price----current count:{0} ---------'.format(self.count))
+            if self.count % 100 == 0:
+                logging.info('---update price----current count:{0} ---------'.format(self.count))
         return item
 

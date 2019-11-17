@@ -75,7 +75,8 @@ class LianjiaSpider(scrapy.Spider):
 
 
     def parse_page(self, response):
-        bizcircle = response.meta['bizcircle']        
+        bizcircle = response.meta['bizcircle']
+        date = datetime.date.today()        
         for item in response.css('.clear.LOGCLICKDATA'):
             id = int(item.xpath('./a/@href').re(r"[0-9]+")[0])
             old_house = self.collection.find_one({"_id": id})
@@ -83,20 +84,17 @@ class LianjiaSpider(scrapy.Spider):
                 url = self.settings['BASE_URL'] + '/ershoufang/{0}.html'.format(id)
                 yield scrapy.Request(url=url, callback=self.parse_detail, meta={'new':id, 'bizcircle': bizcircle})
             # 解析价格，并发给pipeline
-            date = datetime.datetime.strptime(str(datetime.date.today()),'%Y-%m-%d')
-            today = self.price_collection.find_one({"house_id": id, 'date': date})
-            if not today:
-                price = {}
-                priceItem = PriceItem()
-                priceItem['data'] = price
-                price['house_id'] = id
-                price['date'] = date
-                price['总价'] = float(item.css('.totalPrice').xpath('./span').re('[0-9.]+')[0])
-                price['单价'] = float(item.css('.unitPrice').xpath('./span').re('[0-9.]+')[0])
-                # todo 关注、带看。。。
-                # self.log('parse house price: {0}'.format(id), level=logging.INFO)
-                yield priceItem
-    
+            price = {}
+            priceItem = PriceItem()
+            priceItem['data'] = price
+            price['house_id'] = id
+            price['date'] = date
+            price['总价'] = float(item.css('.totalPrice').xpath('./span').re('[0-9.]+')[0])
+            price['单价'] = float(item.css('.unitPrice').xpath('./span').re('[0-9.]+')[0])
+            # todo 关注、带看。。。
+            # self.log('parse house price: {0}'.format(id), level=logging.INFO)
+            yield priceItem
+
     def parse_detail(self, response):
         house = {}
         house_item = HouseItem()
