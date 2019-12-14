@@ -8,13 +8,37 @@ db.house_detail.aggregate([
         "$group": {
             "_id": {
                 "$cond": [
-                    { "$lt": ["$建筑面积", 100] },
-                    "0-100",
+                    { "$lt": ["$建筑面积", 60] },
+                    "0-60",
                     {
                         "$cond": [
-                            { "$lt": ["$建筑面积", 150] },
-                            "100-150",
-                            "150+"
+                            { "$lt": ["$建筑面积", 80] },
+                            "60-80",
+                            {
+                                "$cond": [
+                                    { "$lt": ["$建筑面积", 100] },
+                                    "80-100",
+                                    {
+                                        "$cond": [
+                                            { "$lt": ["$建筑面积", 120] },
+                                            "100-120",
+                                            {
+                                                "$cond": [
+                                                    { "$lt": ["$建筑面积", 140] },
+                                                    "120-140",
+                                                    {
+                                                        "$cond": [
+                                                            { "$lt": ["$建筑面积", 160] },
+                                                            "140-160",
+                                                            "160+"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
                         ]
                     }
                 ]
@@ -34,7 +58,7 @@ db.house_detail.aggregate([
                                 "$multiply": [{ "$divide": ["$count", { "$literal": nums }] }, 100]
                             },
                             0,
-                            2
+                            6
                         ]
                     },
                     "",
@@ -58,38 +82,60 @@ db.house_detail.aggregate([
     },
 ])
 
-// 区域均价
-// db.house_detail.explain('executionStats').aggregate([
+// 当日均价
 db.house_price.aggregate([
+    { $unwind : "$detail" },    
     {
         $match: {
-            'date': new Date("2019-03-01"),
+            'year':2019,
+            'month':11,
+            'detail.day':20,            
         }
     },
     {
         $group: {
-            _id: "$house_id",
-            '单价': { $avg: "$单价" },
+            _id: null,
+            count: { $sum: 1 },
+            avg: { $avg: "$detail.单价" }
+        }
+    },
+]);
+
+
+// 区域均价
+// db.house_detail.explain('executionStats').aggregate([
+db.house_price.aggregate([
+    { $unwind : "$detail" },    
+    {
+        $match: {
+            'year':2018,
+            'month':12,
+            'detail.day':30,            
         }
     },
     {
         $lookup:
             {
                 from: 'house_detail',
-                localField: '_id',
+                localField: 'house_id',
                 foreignField: '_id',
-                as: 'detail'
+                as: 'house_detail'
             }
     },
     {
+        $replaceRoot: { newRoot: { $mergeObjects: [ { $arrayElemAt: [ "$house_detail", 0 ] }, "$$ROOT" ] } }
+    },
+    { $project: { house_detail: 0 } },
+    {
         $group: {
-            _id: "$detail.小区名称",
+            _id: "$house_detail.小区名称",
             count: { $sum: 1 },
-            avg: { $avg: "$单价" }
+            avg: { $avg: "$detail.单价" }
         }
     },
     { "$match": {"count": { $gte: 70} }},
     { "$sort": { "avg": -1 } },
+    { "$limit": 10 },
 ]);
 
 //按日期均值
