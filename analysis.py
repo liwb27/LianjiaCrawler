@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from datetime import datetime, date, timedelta
+import sys
 
 client = MongoClient('mongodb://localhost:27017')
 db = client.lianjia
@@ -424,9 +425,18 @@ def analyse_today(date = date.today()):
             print(i)
 
 if __name__ == '__main__':
-    # 今日均价
-    begin = datetime.strptime('2018-12-1', '%Y-%m-%d')
-    end = date.today()
+    count = len(sys.argv)
+    if len(sys.argv) == 1:
+        begin = datetime.today()
+        end = datetime.today()
+    elif len(sys.argv) == 2:
+        begin = datetime.strptime(sys.argv[1], '%Y-%m-%d')
+        end = datetime.today()
+    else:
+        begin = datetime.strptime(sys.argv[1], '%Y-%m-%d')
+        end = datetime.strptime(sys.argv[2], '%Y-%m-%d')
+    print('begin:',begin,'end:',end)
+
 
     for i in range((end - begin).days + 1):
         day = begin + timedelta(days=i)
