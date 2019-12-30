@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{url_for('static',filename='css/solar-bootstrap.min.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/landing-page.css')}}">
+
+    <title>{% if title %}{{ title }} - 郑州二手房价格{% else %}郑州二手房价格{% endif %}</title>
+</head>
+
+<body>
+    {% block navbar %}
+
+    {% endblock %}
+
+    {% block content %}
+
+    <h1>Hello, world!</h1>
+    <div class="container">
+            <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="customFile">
+                    <label class="custom-file-label" for="customFile">Choose file</label>
+                  </div>
+            <form>
+                    <div class="form-row">
+                      <div class="col-md-4 mb-3">
+                        <label for="validationServer01">First name</label>
+                        <input type="text" class="form-control is-invalid" id="validationServer01" placeholder="First name" value="Mark" required>
+                        <div class="valid-feedback">
+                          Looks good!
+                        </div>
+                        <div class="invalid-feedback">
+                                Please choose a username.
+                              </div>
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <label for="validationServer02">Last name</label>
+                        <input type="text" class="form-control is-valid" id="validationServer02" placeholder="Last name" value="Otto" required>
+                        <div class="valid-feedback">
+                          Looks good!
+                        </div>
+                      </div>
+                      <div class="col-md-4 mb-3">
+                        <label for="validationServerUsername">Username</label>
+                        <div class="input-group">
+                          <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroupPrepend3">@</span>
+                          </div>
+                          <input type="text" class="form-control is-invalid" id="validationServerUsername" placeholder="Username" aria-describedby="inputGroupPrepend3" required>
+                          <div class="invalid-feedback">
+                            Please choose a username.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="col-md-6 mb-3">
+                        <label for="validationServer03">City</label>
+                        <input type="text" class="form-control is-invalid" id="validationServer03" placeholder="City" required>
+                        <div class="invalid-feedback">
+                          Please provide a valid city.
+                        </div>
+                      </div>
+                      <div class="col-md-3 mb-3">
+                        <label for="validationServer04">State</label>
+                        <input type="text" class="form-control is-invalid" id="validationServer04" placeholder="State" required>
+                        <div class="invalid-feedback">
+                          Please provide a valid state.
+                        </div>
+                      </div>
+                      <div class="col-md-3 mb-3">
+                        <label for="validationServer05">Zip</label>
+                        <input type="text" class="form-control is-invalid" id="validationServer05" placeholder="Zip" required>
+                        <div class="invalid-feedback">
+                          Please provide a valid zip.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <div class="form-check">
+                        <input class="form-check-input is-invalid" type="checkbox" value="" id="invalidCheck3" required>
+                        <label class="form-check-label" for="invalidCheck3">
+                          Agree to terms and conditions
+                        </label>
+                        <div class="invalid-feedback">
+                          You must agree before submitting.
+                        </div>
+                      </div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Submit form</button>
+                  </form>
+
+
+            <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Dropdown
+                    </button>
+                    <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#">Regular link</a>
+                            <a class="dropdown-item active" href="#">Active link</a>
+                            <a class="dropdown-item" href="#">Another link</a>
+                          </div>
+                  </div>
+
+            <div class="card w-50">
+                    <div class="card-body">
+                      <h5 class="card-title">Card title</h5>
+                      <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                      <a href="#" class="btn btn-primary">Button</a>
+                    </div>
+                  </div>
+                  <div class="card w-50">
+                        <div class="card-body">
+                          <h5 class="card-title">Card title</h5>
+                          <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                          <a href="#" class="btn btn-primary">Button</a>
+                        </div>
+                      </div>
+
+            <div class="card" style="width: 30rem;">
+                    <div class="card-body">
+                      <h5 class="card-title">Card title</h5>
+                      <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
+                      <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                      <a href="#" class="card-link">Card link</a>
+                      <a href="#" class="card-link">Another link</a>
+                      <a href="#" class="card-link">Another link</a>
+                      <a href="#" class="card-link">Another link</a>
+
+                    </div>
+                  </div>
+
+
+            <h1>Example heading <span class="badge badge-secondary">New</span></h1>
+            <button type="button" class="btn btn-primary">
+                    Notifications <span class="badge badge-secondary">4</span>
+                  </button>
+                  <button type="button" class="btn btn-primary">
+                        Notifications <span class="badge badge-light">4</span>
+                      </button>
+        <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                        <caption>List of users</caption>
+                        <thead class="thead-dark">
+                          <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">First</th>
+                            <th scope="col">Last</th>
+                            <th scope="col">Handle</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <th scope="row">1</th>
+                            <td class="bg-primary">Mark</td>
+                            <td class="table-primary">Otto</td>
+                            <td>@mdo</td>
+                          </tr>
+                          <tr>
+                            <th scope="row">2</th>
+                            <td>Jacob</td>
+                            <td>Thornton</td>
+                            <td>@fat</td>
+                          </tr>
+                          <tr>
+                            <th scope="row">3</th>
+                            <td>Larry</td>
+                            <td>the Bird</td>
+                            <td>@twitter</td>
+                          </tr>
+                        </tbody>
+                      </table>
+        </div>
+
+            <p class="lead">
+                    Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus.
+                  </p>
+                  <p >
+                        Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus.
+                      </p>
+        <div class="row">
+          <div class="col">Variable width content</div>
+          <div class="col">Column</div>
+          <div class="w-100"></div>
+          <div class="col-md-auto">Variable width content</div>
+          <div class="col">Column</div>
+          <div class="col">Column</div>
+        </div>
+      </div>
+
+      <div class="container">
+        <!-- Stack the columns on mobile by making one full-width and the other half-width -->
+        <div class="row">
+          <div class="col-12 col-md-8">.col-12 .col-md-8</div>
+          <div class="col-6 col-md-4">.col-6 .col-md-4</div>
+        </div>
+      
+        <!-- Columns start at 50% wide on mobile and bump up to 33.3% wide on desktop -->
+        <div class="row">
+          <div class="col-6 col-md-4">.col-6 .col-md-4</div>
+          <div class="col-6 col-md-4">.col-6 .col-md-4</div>
+          <div class="col-6 col-md-4">.col-6 .col-md-4</div>
+        </div>
+      
+        <!-- Columns are always 50% wide, on mobile and desktop -->
+        <div class="row">
+          <div class="col-6">.col-6</div>
+          <div class="col-6">.col-6</div>
+        </div>
+      </div>
+
+    {% endblock %}
+
+
+    {% include '_footer.html' %}
+
+    {% block scripts %} 
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="{{url_for('static',filename='js/echarts.js')}}"></script>
+    <script src="{{url_for('static',filename='js/dark.js')}}"></script>
+    <script src="{{url_for('static',filename='js/jquery-3.4.0.min.js')}}"></script>
+    <script src="{{url_for('static',filename='js/bootstrap.bundle.js')}}"></script>
+    {% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="masthead text-white text-center">
+    <div class="overlay"></div>
+    <div class="container">
+
+        <div class="row">
+            <div class="col-xl-9 mx-auto">
+                <h1 class="mb-5">输入链家房屋编码，查询历史价格</h1>
+            </div>
+
+            <div class="col-md-10 col-lg-8 col-xl-7 mx-auto">
+                <!-- <form> -->
+                    <div class="form-row">
+                        <div class="col-12 col-md-9 mb-2 mb-md-0">
+                            <input id="house-id" type="text" class="form-control form-control-lg" placeholder="输入房屋编码...">
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <button class="btn btn-block btn-lg btn-primary" onclick="goto_detail()">Go!</button>
+                        </div>
+                    </div>
+                <!-- </form> -->
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<div class="container-fluid">
+    <div class="row">
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">今日二手房均价</div>
+                            <div id='div-avg' class="h5 mb-0 font-weight-bold text-gray-800">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">上涨数量</div>
+                            <div id='div-rise' class="h5 mb-0 font-weight-bold text-gray-800">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">下跌数量</div>
+                            <div id='div-fall' class="h5 mb-0 font-weight-bold text-gray-800">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">今日更新数量</div>
+                            <div id='div-updatenum' class="h5 mb-0 mr-3 font-weight-bold text-gray-800">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="row no-gutters">
+    <div id='group-by-avg' class="col-lg-6" style="height:400px;"></div>
+    <div id='group-by-price' class="col-lg-6" style="height:400px;"></div>
+</div>
+<div class="row no-gutters">
+    <div id='group-by-area' class="col-lg-6" style="height:400px;"></div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+{{ super() }}
+
+<script>
+
+$(document).ready(function () {
+    $.ajax({
+        url: "/api/meta_day",
+        type: "Get",
+        data: {
+            'year':2018,
+            'month':12,
+            'day':20,
+        },
+        success: function (data) {
+            if (data != null) {
+                // console.log(data);
+                meta_today = data;
+                document.getElementById('div-avg').innerText = parseInt(data['当日均价']);
+                document.getElementById('div-rise').innerText = data['涨跌数量']['上涨'];
+                document.getElementById('div-fall').innerText = data['涨跌数量']['下跌'];
+                document.getElementById('div-updatenum').innerText = data['当日总数'];
+
+                data['面积区间'].sort(function(a, b){
+                    return  parseInt(a['区间']) - parseInt(b['区间'])
+                });
+                data['单价区间'].sort(function(a, b){
+                    return  parseInt(a['区间']) - parseInt(b['区间'])
+                });
+                data['总价区间'].sort(function(a, b){
+                    if (a['区间'].indexOf('+') != -1) {
+                        return 1;
+                    }
+                    if (b['区间'].indexOf('+') != -1) {
+                        return -1;
+                    }
+                    return  parseInt(a['区间']) - parseInt(b['区间'])
+                });
+
+
+                option_aera = {
+                    title : {
+                        text: '今日房屋面积统计',
+                        subtext: '总计 ' + data['当日总数'],
+                        x:'center'
+                    },
+                    tooltip : {
+                        trigger: 'item',
+                        formatter: "{a} <br/>{b} m<sup>2</sup> : {c} ({d}%)"
+                    },
+                    series : [
+                        {
+                            name: '面积',
+                            type: 'pie',
+                            radius : '70%',
+                            center: ['50%', '50%'],
+                            data:  Object.keys(data['面积区间']).map(function (key) {
+                                if (data['面积区间'][key]['区间'].indexOf('+') == -1) {
+                                    var end = parseInt(data['面积区间'][key]['区间']);
+                                    if (end == 60) {
+                                        var name = '小于' + end;
+                                    }
+                                    else {
+                                        var start = end - 20;
+                                        var name = start + '-' + end;
+                                    }
+                                }
+                                else {
+                                    var name = '大于' + parseInt(data['面积区间'][key]['区间']);
+                                }
+                                return {
+                                    name: name,
+                                    value: data['面积区间'][key]['数量']
+                                }
+                            }),
+                            itemStyle: {
+                                emphasis: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                }
+                            }
+                        }
+                    ]
+                };
+                var chartAera = echarts.init(document.getElementById('group-by-area'), 'dark');
+                chartAera.setOption(option_aera);
+
+                option_avg = {
+                    title : {
+                        text: '今日房屋单价统计',
+                        subtext: '总计 ' + data['当日总数'],
+                        x:'center'
+                    },
+                    tooltip : {
+                        trigger: 'item',
+                        formatter: "{a} <br/>{b} 万元: {c} ({d}%)"
+                    },
+                    series : [
+                        {
+                            name: '单价',
+                            type: 'pie',
+                            radius : '60%',
+                            center: ['50%', '50%'],
+                            data:  Object.keys(data['单价区间']).map(function (key) {
+                                if (data['单价区间'][key]['区间'].indexOf('+') == -1) {
+                                    var end = parseInt(data['单价区间'][key]['区间']);
+                                    if (end == 10000) {
+                                        var name = '小于' + end/10000;
+                                    }
+                                    else {
+                                        var start = end - 2000;
+                                        var name = start/10000 + '-' + end/10000;
+                                    }
+                                }
+                                else {
+                                    var name = '大于' + parseInt(data['单价区间'][key]['区间'])/10000;
+                                }
+                                return {
+                                    name: name,
+                                    value: data['单价区间'][key]['数量']
+                                }
+                            }),
+                            itemStyle: {
+                                emphasis: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                }
+                            }
+                        }
+                    ]
+                };
+                var chartAvg = echarts.init(document.getElementById('group-by-avg'), 'dark');
+                chartAvg.setOption(option_avg);
+
+                option_price = {
+                    title : {
+                        text: '今日房屋总价统计',
+                        subtext: '总计 ' + data['当日总数'],
+                        x:'center'
+                    },
+                    tooltip : {
+                        trigger: 'item',
+                        formatter: "{a} <br/>{b} 万元: {c} ({d}%)"
+                    },
+                    series : [
+                        {
+                            name: '总价',
+                            type: 'pie',
+                            radius : '60%',
+                            center: ['50%', '50%'],
+                            data:  Object.keys(data['总价区间']).map(function (key) {
+                                if (data['总价区间'][key]['区间'].indexOf('+') == -1) {
+                                    var end = parseInt(data['总价区间'][key]['区间']);
+                                    if (end == 60) {
+                                        var name = '小于' + end;
+                                    }
+                                    else {
+                                        var start = end - 20;
+                                        var name = start + '-' + end;
+                                    }
+                                }
+                                else {
+                                    var name = '大于' + parseInt(data['总价区间'][key]['区间']);
+                                }
+                                return {
+                                    name: name,
+                                    value: data['总价区间'][key]['数量']
+                                }
+                            }),
+                            itemStyle: {
+                                emphasis: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                }
+                            }
+                        }
+                    ]
+                };
+                var chartPrice = echarts.init(document.getElementById('group-by-price'), 'dark');
+                chartPrice.setOption(option_price);
+            }
+        }
+    });
+});
+
+function goto_detail() {
+    var id = document.getElementById('house-id').value;
+    window.location.href="/house/"+id;
+}
+
+</script>
+{% endblock%}

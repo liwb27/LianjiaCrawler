@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row no-gutters">
+    <div id='chart' class="col-lg-12" style="height:600px;"></div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<script>
+$(document).ready(function () {
+    $.ajax({
+        url: "/api/price",
+        type: "Get",
+        data: {
+            'id': '{{house._id}}',
+        },
+        success: function (data) {
+            if (data != null) {
+                option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        position: function (pt) {
+                            return [pt[0], '10%'];
+                        }
+                    },
+                    title : {
+                        text: '[{{house._id}}]' + '房屋历史价格',
+                        x:'center'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: Object.keys(data).map(function (key) {
+                            return data[key]['date'];
+                        }),
+                    },
+                    yAxis: {
+                        type: 'value',
+                        boundaryGap: [0, '100%']
+                    },
+                    series: [{
+                        name:'历史数据',
+                        type:'line',
+                        symbol: 'none',
+                        itemStyle: {
+                            color: 'rgb(255, 70, 131)'
+                        },
+                        data: Object.keys(data).map(function (key) {
+                            return data[key]['price'];
+                        }),
+                    }]
+                };
+                var chart = echarts.init(document.getElementById('chart'), 'dark');
+                chart.setOption(option);
+
+            }
+        }
+    });
+});
+
+</script>
+{% endblock%}
