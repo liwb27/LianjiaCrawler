@@ -102,13 +102,14 @@
 <script>
 
 $(document).ready(function () {
+    var today = new Date();
     $.ajax({
         url: "/api/meta_day",
         type: "Get",
         data: {
-            'year':2018,
-            'month':12,
-            'day':20,
+            'year': today.getFullYear(),
+            'month':today.getMonth(),
+            'day':today.getdate(),
         },
         success: function (data) {
             if (data != null) {

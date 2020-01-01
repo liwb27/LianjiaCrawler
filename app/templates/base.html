@@ -6,7 +6,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="{{url_for('static',filename='css/solar-bootstrap.min.css')}}">
+    <!-- <link rel="stylesheet" href="{{url_for('static',filename='css/solar-bootstrap.min.css')}}"> -->
+    <link href="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{url_for('static',filename='css/landing-page.css')}}">
 
     <title>{% if title %}{{ title }} - 郑州二手房价格{% else %}郑州二手房价格{% endif %}</title>
@@ -221,10 +222,13 @@
     {% block scripts %} 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="{{url_for('static',filename='js/echarts.js')}}"></script>
+    <!-- <script src="{{url_for('static',filename='js/echarts.js')}}"></script> -->
+    <script src="https://cdn.bootcss.com/echarts/4.4.0-rc.1/echarts.js"></script>
     <script src="{{url_for('static',filename='js/dark.js')}}"></script>
-    <script src="{{url_for('static',filename='js/jquery-3.4.0.min.js')}}"></script>
-    <script src="{{url_for('static',filename='js/bootstrap.bundle.js')}}"></script>
+    <!-- <script src="{{url_for('static',filename='js/jquery-3.4.0.min.js')}}"></script> -->
+    <script src="https://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
+    <!-- <script src="{{url_for('static',filename='js/bootstrap.bundle.js')}}"></script> -->
+    <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
     {% endblock %}
 </body>
 
