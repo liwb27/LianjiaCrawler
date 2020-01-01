@@ -108,7 +108,7 @@ $(document).ready(function () {
         type: "Get",
         data: {
             'year': today.getFullYear(),
-            'month':today.getMonth(),
+            'month':today.getMonth()+1,
             'day':today.getDate(),
         },
         success: function (data) {
