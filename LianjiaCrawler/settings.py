@@ -29,6 +29,7 @@ MONGO_COLLECTION_PRICE_NAME = 'house_price'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'LianjiaCrawler (+http://www.yourdomain.com)'
+USER_AGENT = 'Baiduspider'
 
 # Obey robots.txt rules
 # ROBOTSTXT_OBEY = True
